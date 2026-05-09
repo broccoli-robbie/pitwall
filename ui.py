@@ -1,4 +1,4 @@
-from textual.app import App
+from textual.app import App, ComposeResult
 from textual.widgets import DataTable, Footer, Label
 
 
@@ -65,12 +65,12 @@ class PitwallApp(App):
 
     """
 
-    def compose(self):
+    def compose(self) -> ComposeResult:
         yield Label("2026 Monza", id="title-bar")
         yield DataTable(id="leaderboard", cursor_type="none")
         yield Footer()
 
-    def on_mount(self):
+    def on_mount(self) -> None:
         table = self.query_one(DataTable)
         table.add_columns("POS", "DRIVER", "TEAM", "TIRES", "GAP", "LAP TIME")
         for driver in FAKE_DRIVERS:
@@ -82,3 +82,8 @@ class PitwallApp(App):
                 driver["gap"],
                 driver["lap_time"],
             )
+
+
+if __name__ == "__main__":
+    app = PitwallApp()
+    app.run()
