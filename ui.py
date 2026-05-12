@@ -46,7 +46,7 @@ class PitwallApp(App):
     }
 
     #title-bar {
-        height: 3;
+        height: 2;
         background: black;
         content-align: center middle;
         text-style: bold;
@@ -55,12 +55,12 @@ class PitwallApp(App):
 
     #leaderboard {
         height: 1fr;
-        border: solid green;
+        border: solid red;
         margin: 0 1;
     }
 
     Footer {
-        height: 2;
+        height: 1;
     }
 
     """
