@@ -65,23 +65,30 @@ class PitwallApp(App):
 
     """
 
+    def __init__(self, session):
+        super().__init__()
+        self.session = session
+        self.current_lap = 1
+        self.gap_mode = "interval"
+
     def compose(self) -> ComposeResult:
-        yield Label("2026 Monza", id="title-bar")
+        yield Label(f"{self.session.year} {self.session.race_name}", id="title-bar")
         yield DataTable(id="leaderboard", cursor_type="none")
         yield Footer()
 
     def on_mount(self) -> None:
         table = self.query_one(DataTable)
         table.add_columns("POS", "DRIVER", "TEAM", "TIRES", "GAP", "LAP TIME")
-        for driver in FAKE_DRIVERS:
-            table.add_row(
-                driver["position"],
-                driver["driver_code"],
-                driver["team"],
-                driver["tires"],
-                driver["gap"],
-                driver["lap_time"],
-            )
+        self._refresh_table()
+
+    def _lap_label(self):
+        return f"Lap {self.current_lap} / {self.total_laps}  < > to step"
+
+    def _gap_mode_label(self):
+        if self.gap_mode == "interval":
+            return "Gap mode: Interval (gap to car ahead)  [T] to toggle"
+        else:
+            return "Gap mode: Leader gap (gap to P1)  [T] to toggle"
 
 
 if __name__ == "__main__":
