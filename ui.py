@@ -1,5 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.widgets import DataTable, Footer, Label
+from textual.binding import Binding
+from data import LapSnapshot
 
 
 FAKE_DRIVERS = [
@@ -81,14 +83,66 @@ class PitwallApp(App):
         table.add_columns("POS", "DRIVER", "TEAM", "TIRES", "GAP", "LAP TIME")
         self._refresh_table()
 
-    def _lap_label(self):
-        return f"Lap {self.current_lap} / {self.total_laps}  < > to step"
+    def _refresh_table(self):
+        table = self.query_one(DataTable)
+        table.clear()
 
-    def _gap_mode_label(self):
+        snapshot: LapSnapshot = self.session.get_snapshot(self.current_lap)
+
+        for driver in snapshot.drivers:
+            pos_str = f"P{driver.position}"
+            tire = compound_badge(driver.compound)
+            if self.gap_mode == "interval":
+                gap = driver.interval
+            else:
+                gap = driver.gap_to_leader
+            if driver.is_fastest_lap:
+                lap_time = f"[bold purple]{driver.lap_time}[/]"
+            else:
+                lap_time = driver.lap_time
+            color = team_color(driver.team)
+
+            table.add_row(
+                pos_str,
+                f"[{color}]{driver.driver_code}[/]  [dim]{driver.full_name}[/]",
+                f"[{color}]{driver.team}[/]",
+                tire,
+                gap,
+                lap_time,
+            )
+
+    BINDINGS = [
+        Binding("right", "next_lap", "Next Lap"),
+        Binding("left", "prev_lap", "Prev Lap"),
+        Binding("t", "toggle_gap", "Toggle Gap Mode"),
+        Binding("q", "quit", "Quit"),
+    ]
+
+    def _lap_label(self) -> str:
+        return f"Lap {self.current_lap} / {self.session.total_laps}  < > to step"
+
+    def _gap_mode_label(self) -> str:
         if self.gap_mode == "interval":
             return "Gap mode: Interval (gap to car ahead)  [T] to toggle"
         else:
             return "Gap mode: Leader gap (gap to P1)  [T] to toggle"
+
+    def action_next_lap(self):
+        if self.current_lap < self.session.total_laps:
+            self.current_lap += 1
+            self._refresh_table()
+
+    def action_prev_lap(self):
+        if self.current_lap > 1:
+            self.current_lap -= 1
+            self._refresh_table()
+
+    def action_toggle_gap(self):
+        if self.gap_mode == "interval":
+            self.gap_mode = "leader"
+        else:
+            self.gap_mode = "interval"
+        self._refresh_table()
 
 
 if __name__ == "__main__":
